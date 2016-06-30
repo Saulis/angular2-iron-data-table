@@ -5,7 +5,8 @@
 
 #### Install and Configure directives
 - `npm install angular2-iron-data-table --save`
->> Install `@vaadin/angular2-polymer` as a dependency
+
+>> Installs `@vaadin/angular2-polymer` as a dependency
 
 `angular-cli-build.json`:
 - Add `'@vaadin/angular2-polymer/**/*.js'` and `'angular2-iron-data-table/index.js'` to `vendorNpmFiles`
