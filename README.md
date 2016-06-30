@@ -5,6 +5,7 @@
 
 #### Install and Configure directives
 - `npm install angular2-iron-data-table --save`
+>> Install `@vaadin/angular2-polymer` as a dependency
 
 `angular-cli-build.json`:
 - Add `'@vaadin/angular2-polymer/**/*.js'` and `'angular2-iron-data-table/index.js'` to `vendorNpmFiles`
@@ -28,7 +29,8 @@
 - Add `items = [{value: 'foo'}, {value: 'bar'}];` into constructor
 
 `src/app/my-dream-app.component.html`
-- Add ```html
+- Add 
+```html
 <iron-data-table [items]="items">
   <data-table-column name="Column Name">
     <div *headerTemplate="let column=column">Column name is: {{column.name}}</div>
@@ -36,3 +38,4 @@
   </data-table-column>
 </iron-data-table>
 ```
+>> @vaadin/angular2-polymer converts the API to be angular2-compatible, see http://saulis.github.io/iron-data-table/ and http://saulis.github.io/iron-data-table/demo/ for more API details and usage examples.
