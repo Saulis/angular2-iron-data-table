@@ -1,102 +1,123 @@
-import { Directive, TemplateRef, ViewContainerRef } from '@angular/core';
-import { getDOM } from '@angular/platform-browser/src/dom/dom_adapter';
-const Polymer:any = (<any>window).Polymer;
-const saulis:any = (<any>window).saulis;
-
-var dom = getDOM();
-// see https://github.com/Polymer/polymer/issues/3742
-dom.appendChild = function(el, node) {
-  if (node.nodeName === '#comment') {
-    el.appendChild(node);
-  } else {
-    Polymer.dom(el).appendChild(node); Polymer.dom.flush();
-  }
-}
+import { Directive, TemplateRef, ViewContainerRef, NgModule, OnInit, EmbeddedViewRef } from '@angular/core';
+import { getDOM, DomAdapter } from '@angular/platform-browser/src/dom/dom_adapter';
 
 class RowTemplateContext {
-  constructor() {}
-
   notifyPath(path: string, value: any) {
     this[path] = value;
   }
 }
 
 class Template {
-  constructor(
-    _templateRef: TemplateRef<any>,
-    _viewContainer: ViewContainerRef
-    ) {
-      if (!saulis.templatizeSet) {
-        var cell = document.createElement('data-table-cell');
-        var proto = Object.getPrototypeOf(cell);
-        var defaultTemplatize = proto._templatize;
-        var ng2Templatize = function(template) {
-          if (template.templateRef) {
-            var viewRef = template.viewContainerRef.createEmbeddedView(template.templateRef, new RowTemplateContext());
 
-            // in some cases, default header is already set.
-            if (this._instance) {
-              // remove default header template instance
-              Polymer.dom(this).removeChild(Polymer.dom(this).querySelector('div'));
-            }
-            for (var i = 0; i < viewRef.rootNodes.length; i++) {
-              Polymer.dom(this).appendChild(viewRef.rootNodes[i]);
-            }
+  constructor() {
+    const saulis: any = (<any>window).saulis;
+    const polymer: any = (<any>window).Polymer;
+    if (!saulis.templatizeSet) {
+      const cell = document.createElement('data-table-cell');
+      const proto = Object.getPrototypeOf(cell);
+      const defaultTemplatize = proto._templatize;
+      const ng2Templatize = function (template) {
+        const tempRef: TemplateRef<any> = template.templateRef;
+        if (tempRef) {
+          const viewRef: EmbeddedViewRef<any> = template.viewContainerRef.createEmbeddedView(tempRef, new RowTemplateContext());
 
-            Polymer.dom.flush();
-            return viewRef.context;
-          } else {
-            return defaultTemplatize.bind(this)(template);
+          // in some cases, default header is already set.
+          if (this._instance) {
+            // remove default header template instance
+            polymer.dom(this).removeChild(polymer.dom(this).querySelector('div'));
           }
-        };
+          for (let i = 0; i < viewRef.rootNodes.length; i++) {
+            polymer.dom(this).appendChild(viewRef.rootNodes[i]);
+          }
 
-        proto._templatize = ng2Templatize;
-        var detail = document.createElement('data-table-row-detail');
-        Object.getPrototypeOf(detail)._templatize = ng2Templatize;
+          polymer.dom.flush();
+          return viewRef.context;
+        } else {
+          return defaultTemplatize.bind(this)(template);
+        }
+      };
 
-        saulis.templatizeSet = true;
-      }
+      proto._templatize = ng2Templatize;
+      const detail = document.createElement('data-table-row-detail');
+      Object.getPrototypeOf(detail)._templatize = ng2Templatize;
+
+      saulis.templatizeSet = true;
+    }
   }
+
 }
 
 @Directive({
   selector: '[rowTemplate]'
 })
-export class RowTemplate extends Template {
-  constructor(
-    _templateRef: TemplateRef<any>,
-    _viewContainer: ViewContainerRef
-    ) {
-    super(_templateRef, _viewContainer);
-    let columnElement: any = _viewContainer.element.nativeElement.parentElement;
-    columnElement._setTemplate({templateRef: _templateRef, viewContainerRef: _viewContainer});
+export class RowTemplate extends Template implements OnInit {
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+    super();
   }
+
+  ngOnInit(): void {
+    const columnElement: any = this.viewContainer.element.nativeElement.parentElement;
+    columnElement._setTemplate({templateRef: this.templateRef, viewContainerRef: this.viewContainer});
+  }
+
 }
 
 @Directive({
   selector: '[headerTemplate]'
 })
-export class HeaderTemplate extends Template {
-  constructor(
-    _templateRef: TemplateRef<any>,
-    _viewContainer: ViewContainerRef
-    ) {
-    super(_templateRef, _viewContainer);
-    let columnElement: any = _viewContainer.element.nativeElement.parentElement;
-    columnElement._setHeaderTemplate({templateRef: _templateRef, viewContainerRef: _viewContainer});
+export class HeaderTemplate extends Template implements OnInit {
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+    super();
   }
+
+  ngOnInit(): void {
+    const columnElement: any = this.viewContainer.element.nativeElement.parentElement;
+    columnElement._setHeaderTemplate({templateRef: this.templateRef, viewContainerRef: this.viewContainer});
+  }
+
 }
 
 @Directive({
   selector: '[detailsTemplate]'
 })
 export class DetailsTemplate extends Template {
-  constructor(
-    _templateRef: TemplateRef<any>,
-    _viewContainer: ViewContainerRef
-    ) {
-    super(_templateRef, _viewContainer);
-    let tableElement: any = _viewContainer.element.nativeElement.parentElement;
-    tableElement.rowDetail = {templateRef: _templateRef, viewContainerRef: _viewContainer};
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+    super();
+    const tableElement: any = this.viewContainer.element.nativeElement.parentElement;
+    tableElement.rowDetail = {templateRef: this.templateRef, viewContainerRef: this.viewContainer};
   }
+
 }
+
+@NgModule({
+  declarations: [
+    RowTemplate,
+    DetailsTemplate,
+    HeaderTemplate
+  ],
+  exports: [
+    RowTemplate,
+    DetailsTemplate,
+    HeaderTemplate
+  ]
+})
+export class IronDataTableModule {
+
+  constructor() {
+    const dom: DomAdapter = getDOM();
+    const polymer: any = (<any>window).Polymer;
+    dom.appendChild = (el, node) => {
+      if (node.nodeName === '#comment') {
+        el.appendChild(node);
+      } else {
+        polymer.dom(el).appendChild(node);
+        polymer.dom.flush();
+      }
+    };
+  }
+
+}
+
